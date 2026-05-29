@@ -1,27 +1,33 @@
-/*
- * Copyright (c) 2024 Your Name
- * SPDX-License-Identifier: Apache-2.0
- */
-
-`default_nettype none
-
-module tt_um_example (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+module full_adder (
+    input  a,
+    input  b,
+    input  cin,
+    output sum,
+    output cout
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+assign sum  = a ^ b ^ cin;
+assign cout = (a & b) | (b & cin) | (a & cin);
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+endmodule
+
+module carry_save_adder (
+    input  [3:0] A,
+    input  [3:0] B,
+    input  [3:0] C,
+    output [4:0] SUM
+);
+
+wire [3:0] s;
+wire [3:0] carry;
+
+// Stage 1: Carry Save Addition
+full_adder FA0 (.a(A[0]), .b(B[0]), .cin(C[0]), .sum(s[0]), .cout(carry[0]));
+full_adder FA1 (.a(A[1]), .b(B[1]), .cin(C[1]), .sum(s[1]), .cout(carry[1]));
+full_adder FA2 (.a(A[2]), .b(B[2]), .cin(C[2]), .sum(s[2]), .cout(carry[2]));
+full_adder FA3 (.a(A[3]), .b(B[3]), .cin(C[3]), .sum(s[3]), .cout(carry[3]));
+
+// Stage 2: Final Carry Propagation
+assign SUM = {1'b0, s} + {carry, 1'b0};
 
 endmodule
